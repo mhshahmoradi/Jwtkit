@@ -1,0 +1,84 @@
+.card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card);
+    overflow: hidden;
+    transition: border-color 0.2s ease, background 0.3s ease;
+}
+
+.card:hover {
+    border-color: var(--border-hover);
+}
+
+.card-head {
+    height: 42px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card-head);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    color: var(--text-card-head);
+    font-size: 13px;
+    gap: 8px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.card-head-icon {
+    color: var(--icon-accent);
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.card-head-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 4px;
+}
+
+.card-action-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-action);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.card-action-btn:hover {
+    background: var(--bg-action-hover);
+    color: var(--text-action-hover);
+}
+
+.tabs {
+    display: flex;
+    gap: 4px;
+}
+
+.tab {
+    border: 0;
+    background: transparent;
+    color: var(--text-tab);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab:hover {
+    color: var(--text-tab-hover);
+    background: var(--bg-hover);
+}
+
+.tab.active {
+    background: var(--bg-tab-active);
+    color: var(--text-tab-active);
+}

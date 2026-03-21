@@ -1,20 +1,39 @@
-import { createMemo, createSignal } from 'solid-js'
+import { createEffect, createMemo, createSignal } from 'solid-js'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import TokenInputCard from './components/TokenInputCard'
 import DecodedCard from './components/DecodedCard'
 import SignaturePanel from './components/SignaturePanel'
-import { EXAMPLE_JWT, extractClaimDetails, parseJwt } from './utils/jwt'
+import SettingsModal from './components/SettingsModal'
+import { EXAMPLE_JWT, extractClaimDetails, parseJwt, verifySignature } from './utils/jwt'
+import { useSettings } from './context/settings'
 import './App.css'
 
 function App() {
   const [token, setToken] = createSignal(EXAMPLE_JWT)
-  const [secret, setSecret] = createSignal('a-string-secret-at-least-256-bits-long')
+  const [secret, setSecret] = createSignal('')
   const [isBase64Encoded, setIsBase64Encoded] = createSignal(false)
+  const [signatureVerified, setSignatureVerified] = createSignal(false)
+  const { settings } = useSettings()
 
   const parsed = createMemo(() => parseJwt(token()))
-  const headerClaims = createMemo(() => extractClaimDetails(parsed().header))
-  const payloadClaims = createMemo(() => extractClaimDetails(parsed().payload))
+  const headerClaims = createMemo(() =>
+    extractClaimDetails(parsed().header, settings().timezone, settings().calendar)
+  )
+  const payloadClaims = createMemo(() =>
+    extractClaimDetails(parsed().payload, settings().timezone, settings().calendar)
+  )
+
+  createEffect(() => {
+    const t = token()
+    const s = secret()
+    const b64 = isBase64Encoded()
+    if (!parsed().isValid || !s.trim()) {
+      setSignatureVerified(false)
+      return
+    }
+    verifySignature(t, s, b64).then(setSignatureVerified)
+  })
 
   return (
     <main class="page">
@@ -34,7 +53,7 @@ function App() {
           token={token()}
           onTokenChange={setToken}
           isValid={parsed().isValid}
-          signatureVerified={parsed().isValid && Boolean(parsed().signature)}
+          signatureVerified={signatureVerified()}
         />
 
         <section class="decoded-side">
@@ -42,6 +61,7 @@ function App() {
             json={parsed().header}
             claims={headerClaims()}
             colorClass="header-color"
+            defaultTab="json"
           />
           <DecodedCard
             title="Decoded Payload"
@@ -54,7 +74,8 @@ function App() {
             onSecretChange={setSecret}
             isBase64Encoded={isBase64Encoded()}
             onBase64Toggle={setIsBase64Encoded}
-            isValid={parsed().isValid}
+            signatureVerified={signatureVerified()}
+            hasSecret={secret().trim().length > 0}
           />
         </section>
       </section>
@@ -64,6 +85,8 @@ function App() {
         <span class="footer-sep">|</span>
         <span>Report Issue</span>
       </footer>
+
+      <SettingsModal />
     </main>
   )
 }

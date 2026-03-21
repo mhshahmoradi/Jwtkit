@@ -1,4 +1,6 @@
 import type { ClaimDetail, JsonValue, JwtParseResult } from '../types/jwt'
+import type { CalendarType } from '../context/settings'
+import { formatTimestamp as formatTs, formatTimestampShort } from './time'
 
 const CLAIM_EXPLANATIONS: Record<string, string> = {
   alg: 'The algorithm used to sign the JWT.',
@@ -23,16 +25,28 @@ const CLAIM_EXPLANATIONS: Record<string, string> = {
   tenant: 'The tenant identifier.',
 }
 
+const CLAIM_LEARN_MORE: Record<string, string> = {
+  alg: 'https://www.rfc-editor.org/rfc/rfc7515#section-4.1.1',
+  typ: 'https://www.rfc-editor.org/rfc/rfc7519#section-5.1',
+  kid: 'https://www.rfc-editor.org/rfc/rfc7515#section-4.1.4',
+  x5t: 'https://www.rfc-editor.org/rfc/rfc7515#section-4.1.7',
+  iss: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.1',
+  sub: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.2',
+  aud: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.3',
+  exp: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.4',
+  nbf: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.5',
+  iat: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.6',
+  jti: 'https://www.rfc-editor.org/rfc/rfc7519#section-4.1.7',
+  auth_time: 'https://openid.net/specs/openid-connect-core-1_0.html#IDToken',
+}
+
 export const EXAMPLE_JWT =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxOTIwNDAzMDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c'
 
-const formatTimestamp = (value: number): string => {
-  const milliseconds = value > 1_000_000_000_000 ? value : value * 1000
-  const date = new Date(milliseconds)
-  if (Number.isNaN(date.getTime())) {
-    return 'Invalid timestamp'
-  }
-  return `${date.toLocaleString()} (${date.toISOString()})`
+const formatTimestamp = (value: number, timezone: string, calendar: CalendarType): string => {
+  const full = formatTs(value, timezone, calendar)
+  const short = formatTimestampShort(value, timezone, calendar)
+  return `${short} (${full})`
 }
 
 const normalizeBase64Url = (value: string): string => {
@@ -44,11 +58,14 @@ const normalizeBase64Url = (value: string): string => {
   return normalized + '='.repeat(4 - padding)
 }
 
-const decodeBase64Url = (value: string): string => {
+const decodeBase64UrlToBytes = (value: string): Uint8Array => {
   const normalized = normalizeBase64Url(value)
   const binary = atob(normalized)
-  const bytes = Uint8Array.from(binary, (char) => char.codePointAt(0) ?? 0)
-  return new TextDecoder().decode(bytes)
+  return Uint8Array.from(binary, (char) => char.codePointAt(0) ?? 0)
+}
+
+const decodeBase64Url = (value: string): string => {
+  return new TextDecoder().decode(decodeBase64UrlToBytes(value))
 }
 
 const parseJson = (text: string): Record<string, JsonValue> => {
@@ -133,14 +150,18 @@ const getClaimDetails = (key: string, _value: JsonValue): string => {
   return CLAIM_EXPLANATIONS[key] ?? ''
 }
 
-const getTimestamp = (key: string, value: JsonValue): string | null => {
+const getTimestamp = (key: string, value: JsonValue, timezone: string, calendar: CalendarType): string | null => {
   if (TIMESTAMP_CLAIMS.has(key) && typeof value === 'number') {
-    return formatTimestamp(value)
+    return formatTimestamp(value, timezone, calendar)
   }
   return null
 }
 
-export const extractClaimDetails = (payload: Record<string, JsonValue> | null): ClaimDetail[] => {
+export const extractClaimDetails = (
+  payload: Record<string, JsonValue> | null,
+  timezone: string = 'local',
+  calendar: CalendarType = 'gregorian',
+): ClaimDetail[] => {
   if (!payload) {
     return []
   }
@@ -150,7 +171,58 @@ export const extractClaimDetails = (payload: Record<string, JsonValue> | null): 
     value: displayValue(value),
     type: valueType(value),
     details: getClaimDetails(key, value),
-    timestamp: getTimestamp(key, value),
+    timestamp: getTimestamp(key, value, timezone, calendar),
     isTimestamp: TIMESTAMP_CLAIMS.has(key) && typeof value === 'number',
+    learnMoreUrl: CLAIM_LEARN_MORE[key] ?? null,
   }))
+}
+
+const ALG_MAP: Record<string, { hash: string }> = {
+  HS256: { hash: 'SHA-256' },
+  HS384: { hash: 'SHA-384' },
+  HS512: { hash: 'SHA-512' },
+}
+
+const getSecretKeyBytes = (secret: string, isBase64Encoded: boolean): Uint8Array => {
+  if (isBase64Encoded) {
+    return decodeBase64UrlToBytes(secret)
+  }
+  return new TextEncoder().encode(secret)
+}
+
+export const verifySignature = async (
+  token: string,
+  secret: string,
+  isBase64Encoded: boolean,
+): Promise<boolean> => {
+  const trimmed = token.trim()
+  if (!trimmed || !secret) return false
+
+  const parts = trimmed.split('.')
+  if (parts.length !== 3 || !parts[2]) return false
+
+  try {
+    const headerJson = decodeBase64Url(parts[0])
+    const header = JSON.parse(headerJson)
+    const alg = header?.alg as string | undefined
+    if (!alg || !ALG_MAP[alg]) return false
+
+    const { hash } = ALG_MAP[alg]
+    const keyBytes = getSecretKeyBytes(secret, isBase64Encoded)
+
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyBytes.buffer as ArrayBuffer,
+      { name: 'HMAC', hash },
+      false,
+      ['verify'],
+    )
+
+    const signatureInput = new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
+    const signatureBytes = decodeBase64UrlToBytes(parts[2])
+
+    return await crypto.subtle.verify('HMAC', cryptoKey, signatureBytes.buffer as ArrayBuffer, signatureInput.buffer as ArrayBuffer)
+  } catch {
+    return false
+  }
 }

@@ -1,0 +1,86 @@
+.token-card {
+    flex: 1;
+}
+
+.token-input-area {
+    min-height: 420px;
+    position: relative;
+    background: var(--bg-input);
+    transition: background 0.3s ease;
+}
+
+.token-textarea {
+    width: 100%;
+    min-height: 420px;
+    resize: none;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--caret);
+    font-size: 14px;
+    padding: 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    line-height: 1.65;
+    word-break: break-all;
+    position: relative;
+    z-index: 1;
+}
+
+.token-textarea::placeholder {
+    color: var(--text-placeholder);
+}
+
+.token-overlay {
+    position: absolute;
+    inset: 0;
+    padding: 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.65;
+    word-break: break-all;
+    white-space: pre-wrap;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.jwt-header {
+    color: var(--jwt-header);
+}
+
+.jwt-payload {
+    color: var(--jwt-payload);
+}
+
+.jwt-signature {
+    color: var(--jwt-signature);
+}
+
+.jwt-dot {
+    color: var(--jwt-dot);
+}
+
+.token-status-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-height: 28px;
+    flex-wrap: wrap;
+}
+
+.status-badge {
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-badge.ok {
+    color: var(--status-ok);
+}
+
+.status-badge.error {
+    color: var(--status-error);
+}

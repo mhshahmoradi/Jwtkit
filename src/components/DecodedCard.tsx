@@ -2,12 +2,17 @@ import { For, Show, createMemo, createSignal, onCleanup } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import { Copy, Maximize2, Minimize2 } from 'lucide-solid'
 import type { ClaimDetail, JsonValue } from '../types/jwt'
+import { useSettings } from '../context/settings'
+import type { CalendarType } from '../context/settings'
+import { formatTimestamp } from '../utils/time'
 
 type DecodedCardProps = {
   title?: string
   json: Record<string, JsonValue> | null
   claims: ClaimDetail[]
   colorClass: string
+  isRtlCalendar?: boolean
+  defaultTab?: 'json' | 'claims'
 }
 
 const TIMESTAMP_KEYS = new Set(['exp', 'iat', 'nbf', 'auth_time'])
@@ -15,26 +20,21 @@ const TIMESTAMP_KEYS = new Set(['exp', 'iat', 'nbf', 'auth_time'])
 const escapeHtml = (str: string): string =>
   str.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
 
-const formatTimestampTooltip = (value: number): string => {
-  const ms = value > 1_000_000_000_000 ? value : value * 1000
-  const date = new Date(ms)
-  if (Number.isNaN(date.getTime())) return ''
-  return date.toString()
-}
-
-const highlightJson = (obj: Record<string, JsonValue> | null): string => {
+const highlightJson = (obj: Record<string, JsonValue> | null, timezone: string, calendar: 'gregorian' | 'solar-hijri' | 'lunar-hijri'): string => {
   if (!obj) return '{}'
   const lines: string[] = ['{']
   const entries = Object.entries(obj)
+  const isRtl = calendar === 'solar-hijri' || calendar === 'lunar-hijri'
+  const tooltipClass = isRtl ? 'json-number json-timestamp tooltip-rtl' : 'json-number json-timestamp'
 
   entries.forEach(([key, value], i) => {
     const comma = i < entries.length - 1 ? ',' : ''
     const escapedKey = escapeHtml(key)
 
     if (TIMESTAMP_KEYS.has(key) && typeof value === 'number') {
-      const tooltip = escapeHtml(formatTimestampTooltip(value))
+      const tooltip = escapeHtml(formatTimestamp(value, timezone, calendar))
       lines.push(
-        `  <span class="json-key">"${escapedKey}"</span>: <span class="json-number json-timestamp" data-tooltip="${tooltip}">${value}</span>${comma}`
+        `  <span class="json-key">"${escapedKey}"</span>: <span class="${tooltipClass}" data-tooltip="${tooltip}">${value}</span>${comma}`
       )
     } else if (typeof value === 'string') {
       lines.push(
@@ -81,6 +81,9 @@ const CardContent = (props: {
   highlightedJson: string
   jsonString: string
   expanded: boolean
+  isRtlCalendar: boolean
+  timezone: string
+  calendar: CalendarType
   onCopy: () => void
   onToggleExpand: () => void
 }) => (
@@ -130,8 +133,11 @@ const CardContent = (props: {
                         </td>
                         <td class="claim-value">
                           <Show when={claim.isTimestamp}>
-                            <span class="claim-timestamp">
-                              {claim.value} ({claim.timestamp})
+                            <span
+                              class={`claim-timestamp-hover ${props.isRtlCalendar ? 'tooltip-rtl' : ''}`}
+                              data-tooltip={claim.isTimestamp ? formatTimestamp(Number(claim.value), props.timezone, props.calendar) : ''}
+                            >
+                              {claim.value}
                             </span>
                           </Show>
                           <Show when={!claim.isTimestamp}>
@@ -166,7 +172,8 @@ const CardContent = (props: {
 )
 
 const DecodedCard = (props: DecodedCardProps) => {
-  const [tab, setTab] = createSignal<'json' | 'claims'>('claims')
+  const { settings } = useSettings()
+  const [tab, setTab] = createSignal<'json' | 'claims'>(props.defaultTab ?? 'json')
   const [expanded, setExpanded] = createSignal(false)
 
   const jsonString = createMemo(() => {
@@ -174,7 +181,9 @@ const DecodedCard = (props: DecodedCardProps) => {
     return JSON.stringify(props.json, null, 2)
   })
 
-  const highlightedJson = createMemo(() => highlightJson(props.json))
+  const isRtlCalendar = createMemo(() => settings().calendar === 'solar-hijri' || settings().calendar === 'lunar-hijri')
+
+  const highlightedJson = createMemo(() => highlightJson(props.json, settings().timezone, settings().calendar))
 
   const handleCopy = () => {
     navigator.clipboard.writeText(jsonString())
@@ -206,6 +215,9 @@ const DecodedCard = (props: DecodedCardProps) => {
           highlightedJson={highlightedJson()}
           jsonString={jsonString()}
           expanded={expanded()}
+          isRtlCalendar={isRtlCalendar()}
+          timezone={settings().timezone}
+          calendar={settings().calendar}
           onCopy={handleCopy}
           onToggleExpand={toggleExpand}
         />
@@ -226,6 +238,9 @@ const DecodedCard = (props: DecodedCardProps) => {
                   highlightedJson={highlightedJson()}
                   jsonString={jsonString()}
                   expanded={expanded()}
+                  isRtlCalendar={isRtlCalendar()}
+                  timezone={settings().timezone}
+                  calendar={settings().calendar}
                   onCopy={handleCopy}
                   onToggleExpand={toggleExpand}
                 />

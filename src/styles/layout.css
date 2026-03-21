@@ -1,0 +1,107 @@
+.page {
+    width: min(1400px, 96vw);
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 12px 0 28px;
+    display: flex;
+    flex-direction: column;
+}
+
+.workspace-grid {
+    display: grid;
+    gap: 12px 22px;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto 1fr;
+    align-items: start;
+    flex: 1;
+}
+
+.column-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-bottom: 4px;
+}
+
+.left-column-header {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.right-column-header {
+    grid-column: 2;
+    grid-row: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+}
+
+.helper-text {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.section-title {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.editor-side {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.decoded-side {
+    grid-column: 2;
+    grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.hero-section {
+    text-align: center;
+    max-width: 680px;
+    margin: 32px auto 24px;
+}
+
+.hero-section p {
+    color: var(--text-secondary);
+    line-height: 1.65;
+    font-size: 15px;
+    margin: 0;
+}
+
+.hero-section a {
+    color: var(--text-secondary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.page-footer {
+    text-align: center;
+    padding: 24px 0 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.page-footer span {
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.page-footer span:hover {
+    color: var(--text-action-hover);
+}
+
+.footer-sep {
+    margin: 0 10px;
+    color: var(--text-footer-sep);
+}

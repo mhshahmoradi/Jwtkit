@@ -1,0 +1,59 @@
+@media (max-width: 1060px) {
+    .workspace-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+    }
+
+    .left-column-header {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .editor-side {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .right-column-header {
+        grid-column: 1;
+        grid-row: 3;
+        margin-top: 16px;
+    }
+
+    .decoded-side {
+        grid-column: 1;
+        grid-row: 4;
+    }
+
+    .top-nav {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 10px;
+    }
+
+    .signature-section .signature-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+
+@media (max-width: 640px) {
+    .page {
+        padding: 8px 0 16px;
+        width: 94vw;
+    }
+
+    .hero-section {
+        margin: 20px auto 16px;
+    }
+
+    .hero-section p {
+        font-size: 14px;
+    }
+
+    .token-input-area,
+    .token-textarea {
+        min-height: 280px;
+    }
+}

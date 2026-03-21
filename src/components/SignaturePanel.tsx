@@ -1,3 +1,4 @@
+import { Show } from 'solid-js'
 import { Copy } from 'lucide-solid'
 
 type SignaturePanelProps = {
@@ -5,7 +6,8 @@ type SignaturePanelProps = {
     onSecretChange: (value: string) => void
     isBase64Encoded: boolean
     onBase64Toggle: (value: boolean) => void
-    isValid: boolean
+    signatureVerified: boolean
+    hasSecret: boolean
 }
 
 const SignaturePanel = (props: SignaturePanelProps) => {
@@ -49,11 +51,13 @@ const SignaturePanel = (props: SignaturePanelProps) => {
                     />
                 </div>
             </div>
-            <div class="token-status-row">
-                {props.secret.trim() && props.isValid && (
-                    <div class="status-badge ok">✓ Valid secret</div>
-                )}
-            </div>
+            <Show when={props.hasSecret}>
+                <div class="token-status-row">
+                    <div class={props.signatureVerified ? 'status-badge ok' : 'status-badge error'}>
+                        {props.signatureVerified ? '✓ Signature Verified' : '✗ Invalid Signature'}
+                    </div>
+                </div>
+            </Show>
         </section>
     )
 }
