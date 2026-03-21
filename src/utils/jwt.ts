@@ -1,17 +1,26 @@
 import type { ClaimDetail, JsonValue, JwtParseResult } from '../types/jwt'
 
 const CLAIM_EXPLANATIONS: Record<string, string> = {
-  iss: 'Issuer of the token',
-  sub: 'Subject that this token refers to',
-  aud: 'Audience that should accept this token',
-  exp: 'Expiration time after which token is no longer valid',
-  nbf: 'Token is not valid before this time',
-  iat: 'Time at which token was issued',
-  jti: 'Unique identifier for this token',
-  name: 'Display name for the subject',
-  email: 'Email address claim',
-  role: 'Role or access group information',
-  scope: 'Space-delimited list of permissions',
+  alg: 'The algorithm used to sign the JWT.',
+  typ: 'The media type of this complete JWT.',
+  kid: 'The key ID is a hint indicating which key was used to secure the JWS.',
+  x5t: 'X.509 certificate SHA-1 thumbprint for the key used to digitally sign the JWS.',
+  iss: 'The issuer of the JWT.',
+  sub: 'The subject of the JWT (the user).',
+  aud: 'The audience that should accept this token.',
+  exp: 'The expiration time on or after which the JWT MUST NOT be accepted for processing.',
+  nbf: 'The time before which the JWT MUST NOT be accepted for processing.',
+  iat: 'The time at which the JWT was issued.',
+  jti: 'The unique identifier for the JWT.',
+  auth_time: 'The time when the End-User authentication occurred.',
+  name: 'Display name for the subject.',
+  email: 'Email address claim.',
+  role: 'Role or access group information.',
+  scope: 'Space-delimited list of permissions.',
+  client_id: 'The client identifier.',
+  idp: 'The identity provider.',
+  amr: 'Authentication methods references.',
+  tenant: 'The tenant identifier.',
 }
 
 export const EXAMPLE_JWT =
@@ -27,7 +36,7 @@ const formatTimestamp = (value: number): string => {
 }
 
 const normalizeBase64Url = (value: string): string => {
-  const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
+  const normalized = value.replaceAll('-', '+').replaceAll('_', '/')
   const padding = normalized.length % 4
   if (padding === 0) {
     return normalized
@@ -38,7 +47,7 @@ const normalizeBase64Url = (value: string): string => {
 const decodeBase64Url = (value: string): string => {
   const normalized = normalizeBase64Url(value)
   const binary = atob(normalized)
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+  const bytes = Uint8Array.from(binary, (char) => char.codePointAt(0) ?? 0)
   return new TextDecoder().decode(bytes)
 }
 
@@ -118,11 +127,17 @@ const displayValue = (value: JsonValue): string => {
   return JSON.stringify(value)
 }
 
-const getClaimDetails = (key: string, value: JsonValue): string => {
-  if ((key === 'exp' || key === 'iat' || key === 'nbf') && typeof value === 'number') {
+const TIMESTAMP_CLAIMS = new Set(['exp', 'iat', 'nbf', 'auth_time'])
+
+const getClaimDetails = (key: string, _value: JsonValue): string => {
+  return CLAIM_EXPLANATIONS[key] ?? ''
+}
+
+const getTimestamp = (key: string, value: JsonValue): string | null => {
+  if (TIMESTAMP_CLAIMS.has(key) && typeof value === 'number') {
     return formatTimestamp(value)
   }
-  return CLAIM_EXPLANATIONS[key] ?? 'Custom claim'
+  return null
 }
 
 export const extractClaimDetails = (payload: Record<string, JsonValue> | null): ClaimDetail[] => {
@@ -135,5 +150,7 @@ export const extractClaimDetails = (payload: Record<string, JsonValue> | null): 
     value: displayValue(value),
     type: valueType(value),
     details: getClaimDetails(key, value),
+    timestamp: getTimestamp(key, value),
+    isTimestamp: TIMESTAMP_CLAIMS.has(key) && typeof value === 'number',
   }))
 }

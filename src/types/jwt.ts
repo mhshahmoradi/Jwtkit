@@ -21,4 +21,6 @@ export type ClaimDetail = {
   value: string
   type: string
   details: string
+  timestamp: string | null
+  isTimestamp: boolean
 }
