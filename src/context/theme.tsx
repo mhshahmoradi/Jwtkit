@@ -4,7 +4,7 @@ type Theme = 'dark' | 'light'
 
 const getInitialTheme = (): Theme => {
     if (typeof window === 'undefined') return 'dark'
-    const stored = localStorage.getItem('tokino-theme')
+    const stored = localStorage.getItem('jwtkit-theme')
     if (stored === 'light' || stored === 'dark') return stored
     return 'dark'
 }
@@ -23,7 +23,7 @@ export const ThemeProvider = (props: { children: JSX.Element }) => {
         const next = theme() === 'dark' ? 'light' : 'dark'
         setTheme(next)
         document.documentElement.setAttribute('data-theme', next)
-        localStorage.setItem('tokino-theme', next)
+        localStorage.setItem('jwtkit-theme', next)
     }
 
     return (

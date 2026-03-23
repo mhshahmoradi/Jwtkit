@@ -7,7 +7,7 @@ export type Settings = {
     calendar: CalendarType
 }
 
-const STORAGE_KEY = 'tokino-settings'
+const STORAGE_KEY = 'jwtkit-settings'
 
 const getInitial = (): Settings => {
     if (typeof window === 'undefined') return { timezone: 'local', calendar: 'gregorian' }
