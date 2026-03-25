@@ -81,9 +81,8 @@ function App() {
       </section>
 
       <footer class="page-footer">
-        <span>Share feedback</span>
-        <span class="footer-sep">|</span>
-        <span>Report Issue</span>
+        <span>Developed with ❤️ by MHReza — </span>
+        <a href="https://github.com/mhshahmoradi/Jwtkit" target="_blank" rel="noopener noreferrer" class="footer-link">Github Repository</a>
       </footer>
 
       <SettingsModal />

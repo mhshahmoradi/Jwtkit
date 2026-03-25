@@ -93,15 +93,15 @@
 
 .page-footer span {
     color: var(--text-muted);
-    cursor: pointer;
+}
+
+.footer-link {
+    color: var(--text-muted);
+    text-decoration: none;
     transition: color 0.2s ease;
 }
 
-.page-footer span:hover {
+.footer-link:hover {
     color: var(--text-action-hover);
-}
-
-.footer-sep {
-    margin: 0 10px;
-    color: var(--text-footer-sep);
+    text-decoration: underline;
 }
