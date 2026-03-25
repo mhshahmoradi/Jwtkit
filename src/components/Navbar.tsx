@@ -9,8 +9,8 @@ const Navbar = () => {
   return (
     <header class="top-nav">
       <div class="brand">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <rect width="28" height="28" rx="6" fill="#1a1a2e" />
+        <svg width="36" height="28" viewBox="0 0 36 28" fill="none">
+          <rect width="36" height="28" rx="6" fill="#1a1a2e" />
           <text x="4" y="20" font-size="16" font-weight="bold" fill="white" font-family="monospace">
             JWT
           </text>
