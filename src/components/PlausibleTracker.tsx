@@ -2,8 +2,8 @@ import Plausible from "plausible-tracker";
 import { type Component, onMount } from "solid-js";
 
 export const plausible = Plausible({
-    domain: "jwtkit.ir",
-    apiHost: "http://plausible.jwtkit.ir"
+    domain: import.meta.env.VITE_PLAUSIBLE_DOMAIN,
+    apiHost: import.meta.env.VITE_PLAUSIBLE_API,
 });
 
 const PlausibleTracker: Component = () => {
